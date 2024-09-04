@@ -1,6 +1,6 @@
 package org.api;
 
-import io.restassured.RestAssured;
+
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import org.dto.request.Order;
@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.restassured.RestAssured.baseURI;
+
 import static io.restassured.RestAssured.given;
 import static org.core.Generator.convertToJson;
 import static org.core.Generator.generateSignature;
@@ -23,9 +23,6 @@ public class ApiService {
 
     private static final String merchant = "api_pk_64b03189_28f3_4b70_930b_0a8de99eb142";
     private static final String key = "api_sk_6fa13424_6751_45ac_a95f_c1a8113233bc";
-    static {
-        RestAssured.baseURI = "https://payment-page.solidgate.com/api/v1/";
-    }
 
     public static PageCreationResponse getPaymentPage(String orderId){
         RequestSpecification requestSpecification = given()
@@ -33,7 +30,7 @@ public class ApiService {
                 .header("Signature", generateSignature(merchant, convertToJson(getPageCreationRequest(orderId)), key))
                 .contentType(ContentType.JSON)
                 .body(getPageCreationRequest(orderId));
-        return requestSpecification.log().all().post(baseURI + "init").then().log().all().extract().response().as(PageCreationResponse.class);
+        return requestSpecification.log().all().post("https://payment-page.solidgate.com/api/v1/init").then().log().all().extract().response().as(PageCreationResponse.class);
     }
 
     public static StatusResponse getStatus(String orderId){
@@ -45,23 +42,22 @@ public class ApiService {
                 .header("Signature", generateSignature(merchant, convertToJson(requestBody), key))
                 .contentType(ContentType.JSON)
                 .body(requestBody);
-        return requestSpecification.log().all().post("https://pay.solidgate.com/api/v1/" + "status").then().log().all().extract().response().as(StatusResponse.class);
+        return requestSpecification.log().all().post("https://pay.solidgate.com/api/v1/status").then().log().all().extract().response().as(StatusResponse.class);
 
     }
 
     public static PageCreationRequest getPageCreationRequest(String orderId){
-        PageCreationRequest request = PageCreationRequest.builder()
+        return PageCreationRequest.builder()
                 .order(getOrder(orderId))
                 .page_customization(getPageCustomizationDto())
                 .build();
-        return request;
     }
 
     private static Order getOrder(String orderId){
         Map<String, String> metadata = new HashMap<>();
         metadata.put("coupon_code", "NY2018");
         metadata.put("partner_id", "123989");
-        Order order = Order.builder()
+        return Order.builder()
                 .amount(1020)
                 .currency("EUR")
                 .customerDateOfBirth("1988-11-21")
@@ -89,11 +85,10 @@ public class ApiService {
                 .trafficSource("facebook")
                 .website("https://solidgate.com")
                 .transactionSource("main_menu").build();
-        return order;
     }
 
     private static PageCustomizationDTO getPageCustomizationDto(){
-        PageCustomizationDTO dto = PageCustomizationDTO.builder()
+        return PageCustomizationDTO.builder()
                 .backUrl("https://solidgate.com")
                 .buttonColor("#00816A")
                 .buttonFontColor("#FFFFFF")
@@ -105,6 +100,5 @@ public class ApiService {
                 .paymentMethods(Collections.singletonList("paypal"))
                 .termsUrl("https://solidgate.com/terms")
                 .build();
-        return dto;
     }
 }
