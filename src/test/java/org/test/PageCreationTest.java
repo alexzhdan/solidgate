@@ -11,6 +11,8 @@ import org.testng.asserts.SoftAssert;
 import org.web.PageCreationPage;
 import org.web.StatusPage;
 
+import java.util.UUID;
+
 import static com.codeborne.selenide.Selenide.open;
 import static org.core.WebdriverProvider.getWebDriver;
 import static org.testng.AssertJUnit.assertTrue;
@@ -21,7 +23,7 @@ public class PageCreationTest {
     private PageCreationPage page;
     private StatusPage statusPage;
     private SoftAssert softAssert;
-    private String orderId;
+    private final String orderId = UUID.randomUUID().toString();
 
     @BeforeTest
     public void setup() {
@@ -29,7 +31,6 @@ public class PageCreationTest {
         page = new PageCreationPage();
         statusPage = new StatusPage();
         softAssert = new SoftAssert();
-        orderId = "923bc7e6-476f-534c-81fb-21eb8a552e55";
     }
 
     @AfterTest
@@ -46,16 +47,18 @@ public class PageCreationTest {
         page.writeCvcCode("852");
         page.writeEmail("test@test.com");
         page.clickSubmitButton();
-        assertTrue(statusPage.isSuccessMessagePresent());
+        assertTrue("Success message is not presented on status page", statusPage.isSuccessMessagePresent());
     }
 
     @Test(priority = 2)
-    public void additionalCheck() {
+    public void additionalCheckOfStatusPage() {
         PageCreationResponse response = ApiService.getPaymentPage(orderId);
         open(response.getUrl());
         String currency = statusPage.getCurrency();
         StatusResponse statusResponse = ApiService.getStatus(orderId);
-        softAssert.assertTrue(currency.contains(statusResponse.getOrder().getAmount()));
+        softAssert.assertTrue(currency.contains(statusResponse.getOrder().getAmount()),
+                "Amount from status page " + currency +
+                        " not correspond to value from API - " + statusResponse.getOrder().getAmount());
         softAssert.assertEquals(statusResponse.getOrder().getStatus(), "auth_ok");
         softAssert.assertAll();
 
